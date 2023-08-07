@@ -39,10 +39,10 @@
             # Other libraries
             libtorch-bin
             cudaPackages.cudatoolkit
+            openmm
           ];
           shellHook = "
           echo 'You are in a nix shell'
-          echo 'use flake' > .envrc && direnv allow
           export PATH=${pkgs.cudaPackages.cudatoolkit}/bin:$PATH
           export LD_LIBRARY_PATH=${pkgs.cudaPackages.cudatoolkit.lib}/lib:$LD_LIBRARY_PATH
           export CUDA_HOME=${pkgs.cudaPackages.cudatoolkit}
@@ -64,6 +64,7 @@
             cppDependencies = with pkgs; [
                 libtorch-bin
                 cudaPackages.cudatoolkit
+                openmm
             ];
             projectName = "openmm-torch";
           in
