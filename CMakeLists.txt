@@ -4,8 +4,10 @@
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 
+project(openmm-torch)
+
 # We need to know where OpenMM is installed so we can access the headers and libraries.
-SET(OPENMM_DIR "/usr/local/openmm" CACHE PATH "Where OpenMM is installed")
+SET(OPENMM_DIR $ENV{OPENMM_HOME})
 INCLUDE_DIRECTORIES("${OPENMM_DIR}/include")
 LINK_DIRECTORIES("${OPENMM_DIR}/lib" "${OPENMM_DIR}/lib/plugins")
 

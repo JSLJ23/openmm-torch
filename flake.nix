@@ -47,6 +47,7 @@
           export LD_LIBRARY_PATH=${pkgs.cudaPackages.cudatoolkit.lib}/lib:$LD_LIBRARY_PATH
           export CUDA_HOME=${pkgs.cudaPackages.cudatoolkit}
           export CUDA_LIB=${pkgs.cudaPackages.cudatoolkit.lib}
+          export OPENMM_HOME=${pkgs.openmm}
           # For debuggin
           echo ${pkgs.cudaPackages.cudatoolkit.lib}
           echo $LD_LIBRARY_PATH
@@ -81,6 +82,7 @@
                 export LD_LIBRARY_PATH=${pkgs.cudaPackages.cudatoolkit.lib}/lib:$LD_LIBRARY_PATH
                 export CUDA_HOME=${pkgs.cudaPackages.cudatoolkit}
                 export CUDA_LIB=${pkgs.cudaPackages.cudatoolkit.lib}
+                export OPENMM_HOME=${pkgs.openmm}
             '';
             buildPhase = ''
                 make
