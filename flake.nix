@@ -39,7 +39,7 @@
             # Other libraries
             libtorch-bin
             cudaPackages.cudatoolkit
-            openmm
+            python310Packages.openmm
           ];
           shellHook = "
           echo 'You are in a nix shell'
@@ -90,6 +90,13 @@
             installPhase = ''
                 make install
                 make PythonInstall
+            '';
+            postInstall = ''
+                export OPENMM_LIB_PATH=$out/lib
+                export OPENMM_INCLUDE_PATH=$out/include
+                cd python
+                ${pkgs.python3Packages.python.pythonForBuild.interpreter} setup.py build
+                ${pkgs.python3Packages.python.pythonForBuild.interpreter} setup.py install --prefix=$out
             '';
           };
       });
