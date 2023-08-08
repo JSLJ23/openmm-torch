@@ -3,7 +3,7 @@
 
   # Flake inputs
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs"; # also valid: "nixpkgs"
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05"; # also valid: "nixpkgs"
   };
 
   # Flake outputs
@@ -18,18 +18,27 @@
 
       # Helper to provide system-specific attributes
       forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f {
-        pkgs = import nixpkgs { inherit system;
-          config = {
-            allowUnfree = true;
-            cudaSupport = true;
+        pkgs =
+          import nixpkgs {
+            inherit system;
+            config = {
+              allowUnfree = true;
+              cudaSupport = true;
+            };
           };
-        };
       });
 
     in
     {
       # Development environment output
       devShells = forAllSystems ({ pkgs }: {
+        built = pkgs.mkShell {
+          buildInputs = [ (pkgs.python3.withPackages (pkgs: [ self.packages.x86_64-linux.python ])) ];
+
+          shellHook = "
+          echo 'You are in a nix shell'
+";
+        };
         default = pkgs.mkShell {
           # The Nix packages provided in the environment
           packages = with pkgs; [
@@ -41,7 +50,7 @@
             libtorch-bin
             python310Packages.openmm
             swig4
-            python310Packages.python
+            python310
             python310Packages.pip
           ];
           shellHook = "
@@ -49,51 +58,61 @@
           export LD_LIBRARY_PATH=${pkgs.cudaPackages.cudatoolkit.lib}/lib:$LD_LIBRARY_PATH
           export CUDA_HOME=${pkgs.cudaPackages.cudatoolkit}
           export CUDA_LIB=${pkgs.cudaPackages.cudatoolkit.lib}
+          export OPENMM_HOME=${pkgs.openmm.override { enableCuda = true; }}
+          # For debuggin
+          echo $LD_LIBRARY_PATH
           export OPENMM_HOME=${pkgs.openmm}
           ";
         };
       });
 
       packages = forAllSystems ({ pkgs }: {
+        python = pkgs.python310Packages.toPythonModule self.packages.x86_64-linux.default;
         default =
           let
             buildDependencies = with pkgs ; [
-                gcc12
-                cmake
-                cudaPackages.cudatoolkit
+              #gcc12
+              cmake
+              cudaPackages.cudatoolkit
+              addOpenGLRunpath
             ];
             cppDependencies = with pkgs; [
-                libtorch-bin
-                openmm
-                swig4
-                python310Packages.python
-                python310Packages.pip
+              libtorch-bin
+              openmm
+              swig4
+              cudaPackages.cudatoolkit
+              python3
             ];
             projectName = "openmm-torch";
           in
-          pkgs.stdenv.mkDerivation {
+          pkgs.gcc11Stdenv.mkDerivation {
             name = projectName;
             version = "1.1.0";
-            src = self;
+            src = ./.;
             nativeBuildInputs = buildDependencies;
             buildInputs = cppDependencies;
             preConfigure = ''
-                export LD_LIBRARY_PATH=${pkgs.cudaPackages.cudatoolkit.lib}/lib:$LD_LIBRARY_PATH
-                export CUDA_HOME=${pkgs.cudaPackages.cudatoolkit}
-                export CUDA_LIB=${pkgs.cudaPackages.cudatoolkit.lib}
-                export OPENMM_HOME=${pkgs.openmm}
+              export OPENMM_HOME=${pkgs.openmm.override { enableCuda = true; }}
             '';
-#            buildPhase = ''
-#                make
-#            '';
-#            installPhase = ''
-#                make install
-#            '';
+            propagatedBuildInputs = [
+              pkgs.cudaPackages.cudatoolkit
+              (pkgs.openmm.override { enableCuda = true; })
+              pkgs.python3Packages.openmm
+            ];
             postInstall = ''
-                cd python
-                swig -python -c++ -o TorchPluginWrapper.cpp "-I${pkgs.openmm}/include" ${./python/openmmtorch.i}
-                ${pkgs.python3Packages.python.pythonForBuild.interpreter} setup.py build
-                ${pkgs.python3Packages.python.pythonForBuild.interpreter} setup.py install --prefix=$out
+              cd python
+              swig -python -c++ -o TorchPluginWrapper.cpp "-I${pkgs.openmm}/include" ${./python/openmmtorch.i}
+              ${pkgs.python3Packages.python.pythonForBuild.interpreter} setup.py build
+              ${pkgs.python3Packages.python.pythonForBuild.interpreter} setup.py install --prefix=$out
+            '';
+            postFixup = ''
+              addOpenGLRunpath $out/lib/plugins/*.so
+              addOpenGLRunpath $out/lib/*.so
+
+              for lib in $out/lib/python3.10/site-packages/*.so; do
+                echo "Adding rpath to $lib"
+                addOpenGLRunpath "$lib"
+              done
             '';
           };
       });
