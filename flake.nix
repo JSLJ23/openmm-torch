@@ -36,14 +36,15 @@
             direnv # For setting nix enviroment
             gcc12 # The GNU Compiler Collection
             cmake
+            cudaPackages.cudatoolkit
             # Other libraries
             libtorch-bin
-            cudaPackages.cudatoolkit
             python310Packages.openmm
+            swig4
+            python310Packages.python
           ];
           shellHook = "
           echo 'You are in a nix shell'
-          export PATH=${pkgs.cudaPackages.cudatoolkit}/bin:$PATH
           export LD_LIBRARY_PATH=${pkgs.cudaPackages.cudatoolkit.lib}/lib:$LD_LIBRARY_PATH
           export CUDA_HOME=${pkgs.cudaPackages.cudatoolkit}
           export CUDA_LIB=${pkgs.cudaPackages.cudatoolkit.lib}
@@ -61,11 +62,13 @@
             buildDependencies = with pkgs ; [
                 gcc12
                 cmake
+                cudaPackages.cudatoolkit
             ];
             cppDependencies = with pkgs; [
                 libtorch-bin
-                cudaPackages.cudatoolkit
                 openmm
+                swig4
+                python310Packages.python
             ];
             projectName = "openmm-torch";
           in
@@ -75,29 +78,20 @@
             src = self;
             nativeBuildInputs = buildDependencies;
             buildInputs = cppDependencies;
-            configurePhase = ''
-                mkdir build && cd build
-                cmake ../
-                export PATH=${pkgs.cudaPackages.cudatoolkit}/bin:$PATH
+            preConfigure = ''
                 export LD_LIBRARY_PATH=${pkgs.cudaPackages.cudatoolkit.lib}/lib:$LD_LIBRARY_PATH
                 export CUDA_HOME=${pkgs.cudaPackages.cudatoolkit}
                 export CUDA_LIB=${pkgs.cudaPackages.cudatoolkit.lib}
                 export OPENMM_HOME=${pkgs.openmm}
             '';
-            buildPhase = ''
-                make
-            '';
-            installPhase = ''
-                make install
-                make PythonInstall
-            '';
-            postInstall = ''
-                export OPENMM_LIB_PATH=$out/lib
-                export OPENMM_INCLUDE_PATH=$out/include
-                cd python
-                ${pkgs.python3Packages.python.pythonForBuild.interpreter} setup.py build
-                ${pkgs.python3Packages.python.pythonForBuild.interpreter} setup.py install --prefix=$out
-            '';
+#            buildPhase = ''
+#                make
+#            '';
+#            installPhase = ''
+#                make install
+#            '';
+#            postInstall = ''
+#            '';
           };
       });
     };
