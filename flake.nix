@@ -50,9 +50,6 @@
           export CUDA_HOME=${pkgs.cudaPackages.cudatoolkit}
           export CUDA_LIB=${pkgs.cudaPackages.cudatoolkit.lib}
           export OPENMM_HOME=${pkgs.openmm}
-          # For debuggin
-          echo ${pkgs.cudaPackages.cudatoolkit.lib}
-          echo $LD_LIBRARY_PATH
           ";
         };
       });
@@ -93,7 +90,10 @@
 #                make install
 #            '';
             postInstall = ''
-                make PythonInstall
+                cd python
+                swig -python -c++ -o TorchPluginWrapper.cpp "-I${pkgs.openmm}/include" ${./python/openmmtorch.i}
+                ${pkgs.python3Packages.python.pythonForBuild.interpreter} setup.py build
+                ${pkgs.python3Packages.python.pythonForBuild.interpreter} setup.py install --prefix=$out
             '';
           };
       });
