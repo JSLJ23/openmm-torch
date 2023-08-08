@@ -42,6 +42,7 @@
             python310Packages.openmm
             swig4
             python310Packages.python
+            python310Packages.pip
           ];
           shellHook = "
           echo 'You are in a nix shell'
@@ -69,6 +70,7 @@
                 openmm
                 swig4
                 python310Packages.python
+                python310Packages.pip
             ];
             projectName = "openmm-torch";
           in
@@ -90,8 +92,9 @@
 #            installPhase = ''
 #                make install
 #            '';
-#            postInstall = ''
-#            '';
+            postInstall = ''
+                make PythonInstall
+            '';
           };
       });
     };
