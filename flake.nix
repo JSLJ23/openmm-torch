@@ -33,11 +33,11 @@
       # Development environment output
       devShells = forAllSystems ({ pkgs }: {
         built = pkgs.mkShell {
-          buildInputs = [ (pkgs.python3.withPackages (pkgs: [ self.packages.x86_64-linux.python ])) ];
+          buildInputs = [ (pkgs.python3.withPackages (pkgs: [ self.packages.x86_64-linux.openmmtorch-python ])) ];
 
           shellHook = "
           echo 'You are in a nix shell'
-";
+          ";
         };
         default = pkgs.mkShell {
           # The Nix packages provided in the environment
@@ -67,7 +67,7 @@
       });
 
       packages = forAllSystems ({ pkgs }: {
-        python = pkgs.python310Packages.toPythonModule self.packages.x86_64-linux.default;
+        openmmtorch-python = pkgs.python310Packages.toPythonModule self.packages.x86_64-linux.default;
         default =
           let
             buildDependencies = with pkgs ; [
