@@ -61,6 +61,7 @@
           export OPENMM_HOME=${pkgs.openmm.override { enableCuda = true; }}
           # For debuggin
           echo $LD_LIBRARY_PATH
+          export OPENMM_HOME=${pkgs.openmm}
           ";
         };
       });
