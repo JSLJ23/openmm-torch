@@ -18,6 +18,8 @@ FIND_PACKAGE(Torch REQUIRED)
 
 # Specify the C++ version we are building for.
 SET(CMAKE_CXX_STANDARD 14)
+# Dual ABI
+set(GLIBCXX_USE_CXX11_ABI 1)
 
 # Set flags for linking on mac
 IF(APPLE)

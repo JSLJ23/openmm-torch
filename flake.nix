@@ -34,9 +34,14 @@
       devShells = forAllSystems ({ pkgs }: {
         built = pkgs.mkShell {
           buildInputs = [ (pkgs.python3.withPackages (pkgs: [ self.packages.x86_64-linux.openmmtorch-python ])) ];
-
+          packages = with pkgs; [
+            addOpenGLRunpath
+            python310Packages.openmm
+            python310Packages.torch-bin
+          ];
           shellHook = "
           echo 'You are in a nix shell'
+          export LD_LIBRARY_PATH=${pkgs.cudaPackages.cudatoolkit.lib}/lib:$LD_LIBRARY_PATH
           ";
         };
         default = pkgs.mkShell {
@@ -52,6 +57,7 @@
             swig4
             python310
             python310Packages.pip
+            python310Packages.torch-bin
           ];
           shellHook = "
           echo 'You are in a nix shell'
@@ -59,9 +65,6 @@
           export CUDA_HOME=${pkgs.cudaPackages.cudatoolkit}
           export CUDA_LIB=${pkgs.cudaPackages.cudatoolkit.lib}
           export OPENMM_HOME=${pkgs.openmm.override { enableCuda = true; }}
-          # For debuggin
-          echo $LD_LIBRARY_PATH
-          export OPENMM_HOME=${pkgs.openmm}
           ";
         };
       });
@@ -81,7 +84,8 @@
               openmm
               swig4
               cudaPackages.cudatoolkit
-              python3
+              python310
+              python310Packages.torch-bin
             ];
             projectName = "openmm-torch";
           in
