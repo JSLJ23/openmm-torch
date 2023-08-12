@@ -36,10 +36,16 @@
         built = pkgs.mkShell {
           packages = [
             (pkgs.python3.withPackages
-              (pkgs: [ self.packages.x86_64-linux.openmmtorch-python pkgs.torch ]))
+              (pkgs: [
+                self.packages.x86_64-linux.openmmtorch-python
+                pkgs.torch
+                ]
+              )
+            )
           ];
-
-          shellHook = "\n          echo 'You are in a nix shell'\n          ";
+          shellHook = ''
+          echo 'You are in a nix shell'
+          '';
         };
         default = pkgs.mkShell {
           # The Nix packages provided in the environment
@@ -56,10 +62,13 @@
             python310Packages.pip
             python310Packages.torch-bin
           ];
-          shellHook =
-            "\n          echo 'You are in a nix shell'\n          export LD_LIBRARY_PATH=${pkgs.cudaPackages.cudatoolkit.lib}/lib:$LD_LIBRARY_PATH\n          export CUDA_HOME=${pkgs.cudaPackages.cudatoolkit}\n          export CUDA_LIB=${pkgs.cudaPackages.cudatoolkit.lib}\n          export OPENMM_HOME=${
-                        pkgs.openmm.override { enableCuda = true; }
-                      }\n          ";
+          shellHook = ''
+            echo 'You are in a nix shell'
+            export LD_LIBRARY_PATH=${pkgs.cudaPackages.cudatoolkit.lib}/lib:$LD_LIBRARY_PATH
+            export CUDA_HOME=${pkgs.cudaPackages.cudatoolkit}
+            export CUDA_LIB=${pkgs.cudaPackages.cudatoolkit.lib}
+            export OPENMM_HOME=${pkgs.openmm.override { enableCuda = true; }}
+            '';
         };
       });
 
@@ -100,7 +109,7 @@
             ];
             postInstall = ''
               cd python
-              # we want to add each of the directories in the torch includes to the include path
+              # We want to add each of the directories in the torch includes to the include path
               TORCH_INCS_DIR=${pkgs.libtorch-bin.dev}/include
               TORCH_INCS=""
               for dir in $TORCH_INCS_DIR/*; do
