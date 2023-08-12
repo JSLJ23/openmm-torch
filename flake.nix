@@ -3,7 +3,7 @@
 
   # Flake inputs
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05"; # also valid: "nixpkgs"
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable"; # also valid: "nixpkgs"
   };
 
   # Flake outputs
@@ -33,7 +33,12 @@
       # Development environment output
       devShells = forAllSystems ({ pkgs }: {
         built = pkgs.mkShell {
-          buildInputs = [ (pkgs.python3.withPackages (pkgs: [ self.packages.x86_64-linux.python ])) ];
+          packages = [
+            (pkgs.python3.withPackages (pkgs: [
+              self.packages.x86_64-linux.python
+              pkgs.torch
+            ]))
+          ];
 
           shellHook = "
           echo 'You are in a nix shell'
@@ -94,13 +99,21 @@
               export OPENMM_HOME=${pkgs.openmm.override { enableCuda = true; }}
             '';
             propagatedBuildInputs = [
-              pkgs.cudaPackages.cudatoolkit
+              #pkgs.cudaPackages.cudatoolkit
               (pkgs.openmm.override { enableCuda = true; })
               pkgs.python3Packages.openmm
             ];
             postInstall = ''
               cd python
-              swig -python -c++ -o TorchPluginWrapper.cpp "-I${pkgs.openmm}/include" ${./python/openmmtorch.i}
+              # we want to add each of the directories in the torch includes to the include path
+              TORCH_INCS_DIR=${pkgs.libtorch-bin.dev}/include
+              TORCH_INCS=""
+              for dir in $TORCH_INCS_DIR/*; do
+                TORCH_INCS="$TORCH_INCS -I$dir"
+              done
+
+
+              swig -includeall -python -c++ -o TorchPluginWrapper.cpp "-I${pkgs.openmm}/include" $TORCH_INCS ${./python/openmmtorch.i}
               ${pkgs.python3Packages.python.pythonForBuild.interpreter} setup.py build
               ${pkgs.python3Packages.python.pythonForBuild.interpreter} setup.py install --prefix=$out
             '';
